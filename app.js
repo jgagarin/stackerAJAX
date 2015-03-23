@@ -6,6 +6,14 @@ $(document).ready( function() {
 		var tags = $(this).find("input[name='tags']").val();
 		getUnanswered(tags);
 	});
+    $('.inspiration-getter').submit(function(event){
+    //zero out results of previous search
+        $('.results').html('');
+        //get the value of the tags user submitted
+        var userTag = $(this).find("input[name='answerers']").val();
+        getAnswerers(userTag);
+    
+    });
 });
 
 // this function takes the question object returned by StackOverflow 
@@ -88,5 +96,48 @@ var getUnanswered = function(tags) {
 	});
 };
 
+//function for getting top answerers
+var getAnswerers = function(userTag){
 
+    //parameters needed to pass to Stackoverflow API
+    var params = {site: 'stackoverflow'};
+    
+    //url to be passed
+    var url = "http://api.stackexchange.com/2.2/tags/" +userTag+ "/top-answerers/all_time";
+    
+    var result = $.ajax({
+        url: url,
+        data: params,
+        dataType: "jsonp",
+        type: "GET",
+    })
+    .done(function(result){
+        var searchResults = showSearchResults(userTag, result.items.length);
+        $('.search-results').html(searchResults);
+        
+        $.each(result.items, function(i,item){
+            var answer = showAnswer(item);
+            $('.results').append (answer);
+            
+        });
+    })
+    .fail(function(){
+        alert('error');
+    });
+};
 
+var showAnswer = function(item){
+    
+    var result = $('.templates .answer').clone();
+    
+    var user = result.find('.user a')
+		.attr('href', item.user.link)
+		.text(item.user.display_name);
+    var image = "<img src='" + item.user.profile_image + "' alt='" + item.user.display_name + "'>";
+    $(user).append(image);
+	result.find('.post-count').text(item.post_count);
+	result.find('.score').text(item.score);
+
+	return result;
+
+};
